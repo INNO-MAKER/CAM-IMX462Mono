@@ -1,7 +1,8 @@
-# CAM-IMX327/462/290 Quick Start
-![alt text](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW/blob/main/images/327-426-290.jpg)
-- More details please refer to manual
-  - [Manual](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW/blob/main/CAM-IMX290-327-462RAW%20User%20ManualV1.1-EN.pdf)
+# Quick Start Guide for Raspberry IMX327 IMX462 IMX290
+
+## Hardware Description
+  - [462 HW Manual](https://www.inno-maker.com/product/cam-mipi462mono/)
+  - [290 HW Manual](https://www.inno-maker.com/product/cam-mipi290mono/)
 
 
 ## Quick Start For Raspberry PI
@@ -20,3 +21,22 @@
   - sudo chmod -R a+rwx *
 - Step6,use libcamera for preview:
   - libcamera-still -t 0 --tuning-file /home/pi/CAM-IMX462Mono/innomakerpi5_imx290.json
+
+## FAQ
+### 1, Not works on PI3 with bullseys os
+Reason: On Raspberry Pi 3 and earlier devices running Bullseye you need to Resolve Method: re-enable Glamor in order to make the X-Windows hardware accelerated preview window work. 
+
+Open terminal window
+  - sudo raspi-config
+
+Choose 
+  - Advanced Options
+  - Glamor 
+  - Yes. 
+  
+Finally quit raspi-config and let it reboot your Raspberry Pi.
+
+### 2 Not works on Raspberry PI5/CM5 with lastest OS
+Reason：lack of json file. 
+
+Resolve Method: Download json file from legacy os or from our github.
