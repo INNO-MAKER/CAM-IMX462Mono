@@ -1,42 +1,130 @@
-# Quick Start Guide for Raspberry IMX327 IMX462 IMX290
+# CAM-IMX462Mono
 
-## Hardware Description
-  - [462 HW Manual](https://www.inno-maker.com/product/cam-mipi462mono/)
-  - [290 HW Manual](https://www.inno-maker.com/product/cam-mipi290mono/)
+Sony IMX462 Starvis monochrome camera module — driver and usage resources.
 
+---
 
-## Quick Start For Raspberry PI
-- Step1, Open the config.txt on Raspbian:
-  - sudo nano /boot/firmware/config.txt
-- Step2, Add the following text below the [all] line in the config.txt file
-  - dtoverlay=imx290,clock-frequency=74250000
-- Step3, change camera_auto_detect=1
-  - camera_auto_detect=0
-- Step4,reboot and use libcamera for preview
-  - sudo reboot
-  - libcamera-hello -t 0 
-- Step5,downlod json file for imx290/imx426/imx327 sensor module
-  - git clone https://github.com/INNO-MAKER/CAM-IMX462Mono.git
-  - cd /home/pi/CAM-IMX462Mono
-  - sudo chmod -R a+rwx *
-- Step6,use libcamera for preview:
-  - libcamera-still -t 0 --tuning-file /home/pi/CAM-IMX462Mono/innomakerpi5_imx290.json
+## 1. Hardware
 
-## FAQ
-### 1, Not works on PI3 with bullseys os
-Reason: On Raspberry Pi 3 and earlier devices running Bullseye you need to Resolve Method: re-enable Glamor in order to make the X-Windows hardware accelerated preview window work. 
+- [Product Page](https://www.inno-maker.com/product/cam-mipi462mono/)
 
-Open terminal window
-  - sudo raspi-config
+---
 
-Choose 
-  - Advanced Options
-  - Glamor 
-  - Yes. 
-  
-Finally quit raspi-config and let it reboot your Raspberry Pi.
+## 2. Raspberry Pi Usage
 
-### 2 Not works on Raspberry PI5/CM5 with lastest OS
-Reason：lack of json file. 
+For Raspberry Pi setup, installation, and usage, please refer to the dedicated repository:
 
-Resolve Method: Download json file from legacy os or from our github.
+**[INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW)**
+
+That repository covers:
+- Driver installation for Raspberry Pi (Bookworm / Trixie)
+- `config.txt` overlay configuration
+- libcamera / rpicam preview and capture commands
+- HCG mode switching
+- Tuning file usage
+
+For HCG support on Raspberry Pi, see also the `HCG_Raspberry/` folder in this repository.
+
+---
+
+## 3. Jetson Orin Nano Usage
+
+Prebuilt binary driver for **NVIDIA Jetson Orin Nano** (L4T R36.4.x / JetPack 6, kernel `5.15.148-tegra`).
+
+> **Supported board crystal: 74.25 MHz → 1080p60.**
+
+Driver package location: [`jetson-orin-nano-driver/5.15.148/`](jetson-orin-nano-driver/5.15.148/)
+
+### 3.1 Package Contents
+
+| File | Description |
+| :--- | :--- |
+| `binary/imx462.ko` | Prebuilt kernel module |
+| `overlays/tegra234-imx462-cam0.dtbo` | Device tree overlay for CAM0 |
+| `overlays/tegra234-imx462-cam1.dtbo` | Device tree overlay for CAM1 |
+| `overlays/tegra234-imx462-dual.dtbo` | Device tree overlay for dual CAM0+CAM1 |
+| `isp/camera_overrides.imx462_tuned.isp` | Calibrated Argus ISP tuning profile |
+| `scripts/install_binary.sh` | One-step installer (never edits extlinux.conf) |
+| `scripts/preview_argus.sh` | Live preview — color Argus pipeline |
+| `scripts/preview_argus_mono.sh` | Live preview — Mono pipeline |
+| `scripts/capture_argus_image.sh` | Capture JPEG via Argus |
+| `scripts/capture_argus_mono_image.sh` | Capture Mono image via Argus |
+| `scripts/capture_v4l2_image.sh` | Capture RAW image via V4L2 |
+| `USER_MANUAL.md` | Full usage guide |
+
+### 3.2 Installation
+
+**Step 1: Extract and install**
+
+```bash
+tar -xzf imx462_tegra_binary_working_20260630_v1.1.tar.gz
+cd imx462_tegra_binary_working_20260630_v1.1
+sudo bash scripts/install_binary.sh
+```
+
+**Step 2: Activate overlay**
+
+```bash
+# List available overlays:
+sudo python3 /opt/nvidia/jetson-io/config-by-hardware.py -l
+
+# Single camera on CAM0:
+sudo python3 /opt/nvidia/jetson-io/config-by-hardware.py -n '2=Camera IMX462 CAM0'
+
+# Single camera on CAM1:
+sudo python3 /opt/nvidia/jetson-io/config-by-hardware.py -n '2=Camera IMX462 CAM1'
+
+# Dual CAM0+CAM1:
+sudo python3 /opt/nvidia/jetson-io/config-by-hardware.py -n '2=Camera IMX462 Dual (CAM0+CAM1)'
+```
+
+**Step 3: Reboot**
+
+```bash
+sudo reboot
+```
+
+### 3.3 Quick Verification
+
+```bash
+ls /dev/video0 /dev/video1
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=1920,height=1080,pixelformat=RG10 \
+  --stream-mmap --stream-count=60
+```
+
+### 3.4 HCG / LCG Mode Switching
+
+```bash
+# Read current mode (0 = LCG, 1 = HCG):
+cat /sys/module/imx462/parameters/hcg_mode
+
+# Switch to HCG (low-light, lower read noise):
+echo 1 | sudo tee /sys/module/imx462/parameters/hcg_mode
+
+# Switch back to LCG (higher dynamic range):
+echo 0 | sudo tee /sys/module/imx462/parameters/hcg_mode
+```
+
+### 3.5 Preview
+
+```bash
+# Color Argus preview:
+bash scripts/preview_argus.sh
+
+# Mono pipeline preview:
+bash scripts/preview_argus_mono.sh
+```
+
+For full usage including capture commands, camera↔node mapping, ISP configuration, and troubleshooting, see **USER_MANUAL.md** inside the package.
+
+---
+
+## 4. FAQ
+
+### Camera not detected on Raspberry Pi 5 / CM5
+
+Refer to [CAM-MIPI327RAW-and-CAM-MIPI462RAW](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW) for the latest driver and tuning file for Raspberry Pi 5.
+
+### `modprobe imx462` → `invalid module format` on Jetson
+
+The prebuilt `.ko` was built for kernel `5.15.148-tegra`. Check your running kernel with `uname -r`. If it does not match, contact support for a matching build.
