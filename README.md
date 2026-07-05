@@ -123,7 +123,7 @@ For full usage including capture commands, camera↔node mapping, ISP configurat
 
 ### Camera not detected on Raspberry Pi 5 / CM5
 
-Refer to [CAM-MIPI327RAW-and-CAM-MIPI462RAW](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW) for the latest driver and tuning file for Raspberry Pi 5.
+For color version, refer to [CAM-MIPI327RAW-and-CAM-MIPI462RAW](https://github.com/INNO-MAKER/CAM-MIPI327RAW-and-CAM-MIPI462RAW) for the latest driver and tuning file for Raspberry Pi 5.
 
 ### `modprobe imx462` → `invalid module format` on Jetson
 
